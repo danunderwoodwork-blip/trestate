@@ -5,6 +5,7 @@ export default function ListingCard({ l }) {
   const loc = [l.district?.name, l.neighbourhood?.name].filter(Boolean).join(" · ");
   return (
     <Link href={`/listing/${l.id}`} className="card">
+      {l.images?.[0] && <img className="thumb" src={l.images[0].url} alt="" loading="lazy" />}
       <div className="loc">{loc || "Турция"}</div>
       <h3>{l.rooms ? `${l.rooms} · ` : ""}{l.title || `${l.property_type}`}</h3>
       <div className="price">{fmtPrice(l.price, l.currency)}</div>

@@ -39,6 +39,13 @@ export default function ListingPage({ params }) {
     <div className="detail">
       <div className="loc">{loc}</div>
       <h1>{l.rooms ? `${l.rooms} · ` : ""}{l.title || l.property_type}</h1>
+      {(l.images || []).length > 0 && (
+        <div className="gallery">
+          {l.images.map((im) => (
+            <img key={im.url} src={im.url} alt="" loading="lazy" />
+          ))}
+        </div>
+      )}
       <div className="price">{fmtPrice(l.price, l.currency)}</div>
       {Object.keys(pi.converted || {}).length > 0 && (
         <div className="approx">
