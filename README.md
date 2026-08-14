@@ -73,6 +73,22 @@ cd backend
 .venv\Scripts\python -m pytest tests
 ```
 
+## Запуск (prod-стек: PostgreSQL + API + воркер)
+
+Требуется Docker. Alembic-миграции применяются автоматически при старте API.
+
+```bash
+docker compose up --build
+docker compose exec api python -m scripts.seed_demo   # первичный сидинг
+```
+
+API — http://localhost:8000; frontend запускается как в dev
+(или деплоится на Vercel с `BACKEND_URL`, указывающим на API).
+
+Курсы валют (USD/EUR к TRY) обновляются воркером из официального XML
+ЦБ Турции (TCMB) каждые 6 часов; при недоступности TCMB используются
+последние сохранённые курсы.
+
 Прод-БД: задать `TRE_DATABASE_URL=postgresql+psycopg2://...` и применить
 миграции `alembic upgrade head` (dev/тесты работают на SQLite без миграций).
 

@@ -16,6 +16,7 @@ from app.ingestion.lifecycle import utcnow
 from app.ingestion.pipeline import sync_all_enabled
 from app.models import Source
 from app.services.currency import upsert_rate
+from app.services.tcmb import refresh_rates
 
 SOURCES = [
     # Демо-фид (агентский JSON, поставляется с репозиторием) — включён.
@@ -42,10 +43,14 @@ def main() -> None:
         for spec in SOURCES:
             if not db.scalar(select(Source).where(Source.code == spec["code"])):
                 db.add(Source(**spec))
-        now = utcnow()
-        upsert_rate(db, "USD", "$", 41.0, now)
-        upsert_rate(db, "EUR", "€", 46.5, now)
-        db.commit()
+        try:
+            asyncio.run(refresh_rates(db))
+        except Exception as exc:  # офлайн-дев без сети — работаем на константах
+            print(f"TCMB unavailable ({exc}); seeding fallback rates")
+            now = utcnow()
+            upsert_rate(db, "USD", "$", 41.0, now)
+            upsert_rate(db, "EUR", "€", 46.5, now)
+            db.commit()
 
         results = asyncio.run(sync_all_enabled(db))
         for stats in results:

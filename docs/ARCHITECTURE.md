@@ -286,7 +286,10 @@ S3-compatible storage для изображений · Next.js/React frontend.
 1. **Этап 1 (готово в этом репозитории)**: модели, нормализация, ingestion с
    инкрементальным diff и lifecycle, история цен, поиск/фильтры, REST API,
    mock- и feed-адаптеры, тесты, минимальный frontend.
-2. **Этап 2**: PostgreSQL+Alembic в проде, планировщик как отдельный процесс,
-   реальный agency-feed, изображения в S3, курсы валют из API ЦБ.
+2. **Этап 2** (частично готово): PostgreSQL+Alembic в проде и docker-compose
+   (db+api+worker) — готово; планировщик отдельным процессом
+   (`python -m app.tasks.scheduler`) — готово; курсы валют из официального
+   XML TCMB с fallback на сохранённые — готово. Осталось: реальный
+   agency-feed (нужен договор с агентством), изображения в S3.
 3. **Этап 3**: дедупликация с image phash/embeddings, переводы (ru/en/tr),
    AI-extraction, сохранённые поиски и уведомления, аналитика рынка.

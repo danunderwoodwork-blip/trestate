@@ -1,0 +1,41 @@
+# Локальный прод-стек: PostgreSQL + API + воркер синхронизации.
+# Запуск:  docker compose up --build
+# Первичный сидинг:  docker compose exec api python -m scripts.seed_demo
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: trestate
+      POSTGRES_USER: trestate
+      POSTGRES_PASSWORD: trestate
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trestate"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      TRE_DATABASE_URL: postgresql+psycopg2://trestate:trestate@db/trestate
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build: ./backend
+    command: python -m app.tasks.scheduler
+    environment:
+      TRE_DATABASE_URL: postgresql+psycopg2://trestate:trestate@db/trestate
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started   # api применяет alembic-миграции при старте
+
+volumes:
+  pgdata:
