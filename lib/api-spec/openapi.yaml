@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: TREstate — Turkish real estate aggregator API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: listings
+    description: Listing search and detail
+  - name: map
+    description: Map view
+  - name: favorites
+    description: Saved favorites
+  - name: meta
+    description: Reference data
 paths:
   /healthz:
     get:
@@ -24,6 +32,273 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /listings:
+    get:
+      operationId: getListings
+      tags: [listings]
+      summary: Search listings
+      description: Search and filter property listings with pagination
+      parameters:
+        - name: transaction_type
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: property_type
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: district
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: neighbourhood
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: rooms
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          explode: true
+          style: form
+        - name: min_price
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: max_price
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: min_m2
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: max_m2
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: furnished
+          in: query
+          schema:
+            type: ["boolean", "null"]
+        - name: pool
+          in: query
+          schema:
+            type: ["boolean", "null"]
+        - name: parking
+          in: query
+          schema:
+            type: ["boolean", "null"]
+        - name: balcony
+          in: query
+          schema:
+            type: ["boolean", "null"]
+        - name: only_price_drops
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: newest
+            enum: [newest, oldest, price_asc, price_desc, ppm2_asc]
+        - name: page
+          in: query
+          schema:
+            type: number
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          schema:
+            type: number
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Paginated listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingPage"
+
+  /listings/{listing_id}:
+    get:
+      operationId: getListing
+      tags: [listings]
+      summary: Get listing detail
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Listing detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListingDetail"
+        "404":
+          description: Not found
+
+  /listings/{listing_id}/history:
+    get:
+      operationId: getListingHistory
+      tags: [listings]
+      summary: Get listing price history
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Price history entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HistoryPoint"
+
+  /map:
+    get:
+      operationId: getMapPoints
+      tags: [map]
+      summary: Get map marker points
+      parameters:
+        - name: transaction_type
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: property_type
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: district
+          in: query
+          schema:
+            type: ["string", "null"]
+        - name: min_lat
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: max_lat
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: min_lon
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: max_lon
+          in: query
+          schema:
+            type: ["number", "null"]
+        - name: limit
+          in: query
+          schema:
+            type: number
+            default: 500
+            maximum: 2000
+      responses:
+        "200":
+          description: Map marker points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MapPoint"
+
+  /locations:
+    get:
+      operationId: getLocations
+      tags: [meta]
+      summary: Get location tree
+      description: Hierarchical location tree for filters (country → province → district → neighbourhood)
+      responses:
+        "200":
+          description: Location tree nodes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LocationNode"
+
+  /meta:
+    get:
+      operationId: getMeta
+      tags: [meta]
+      summary: Get reference data
+      description: Transaction types, property types, currencies, exchange rates, sort options
+      responses:
+        "200":
+          description: Reference data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetaResponse"
+
+  /favorites:
+    get:
+      operationId: getFavorites
+      tags: [favorites]
+      summary: List saved favorites
+      responses:
+        "200":
+          description: Favorited listings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ListingCard"
+    post:
+      operationId: addFavorite
+      tags: [favorites]
+      summary: Add listing to favorites
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FavoriteInput"
+      responses:
+        "201":
+          description: Added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkResponse"
+        "404":
+          description: Listing not found
+
+  /favorites/{listing_id}:
+    delete:
+      operationId: removeFavorite
+      tags: [favorites]
+      summary: Remove listing from favorites
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "204":
+          description: Removed
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +309,312 @@ components:
       required:
         - status
 
+    OkResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+
+    LocationOut:
+      type: object
+      properties:
+        id:
+          type: number
+        level:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+      required: [id, level, name, slug]
+
+    LocationNode:
+      type: object
+      properties:
+        id:
+          type: number
+        level:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/LocationNode"
+      required: [id, level, name, slug, children]
+
+    ImageOut:
+      type: object
+      properties:
+        url:
+          type: string
+        storage:
+          type: string
+        position:
+          type: number
+      required: [url, storage, position]
+
+    PriceInfo:
+      type: object
+      properties:
+        initial_price:
+          type: ["number", "null"]
+        current_price:
+          type: ["number", "null"]
+        currency:
+          type: string
+        change_abs:
+          type: ["number", "null"]
+        change_pct:
+          type: ["number", "null"]
+        price_changes_count:
+          type: number
+        last_change_at:
+          type: ["string", "null"]
+          format: date-time
+        days_in_db:
+          type: number
+        converted:
+          type: object
+          additionalProperties:
+            type: number
+
+    FreshnessInfo:
+      type: object
+      properties:
+        first_seen_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+        last_checked_at:
+          type: string
+          format: date-time
+        last_changed_at:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: string
+      required: [first_seen_at, last_seen_at, last_checked_at, status]
+
+    ListingCard:
+      type: object
+      properties:
+        id:
+          type: number
+        transaction_type:
+          type: string
+        property_type:
+          type: string
+        title:
+          type: ["string", "null"]
+        price:
+          type: ["number", "null"]
+        currency:
+          type: string
+        price_per_gross_m2:
+          type: ["number", "null"]
+        price_per_net_m2:
+          type: ["number", "null"]
+        gross_area_m2:
+          type: ["number", "null"]
+        net_area_m2:
+          type: ["number", "null"]
+        rooms:
+          type: ["string", "null"]
+        floor:
+          type: ["number", "null"]
+        total_floors:
+          type: ["number", "null"]
+        building_age:
+          type: ["number", "null"]
+        furnished:
+          type: ["boolean", "null"]
+        pool:
+          type: ["boolean", "null"]
+        balcony:
+          type: ["boolean", "null"]
+        parking:
+          type: ["boolean", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        status:
+          type: string
+        first_seen_at:
+          type: string
+          format: date-time
+        last_checked_at:
+          type: string
+          format: date-time
+        province:
+          oneOf:
+            - $ref: "#/components/schemas/LocationOut"
+            - type: "null"
+        district:
+          oneOf:
+            - $ref: "#/components/schemas/LocationOut"
+            - type: "null"
+        neighbourhood:
+          oneOf:
+            - $ref: "#/components/schemas/LocationOut"
+            - type: "null"
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageOut"
+      required:
+        - id
+        - transaction_type
+        - property_type
+        - currency
+        - status
+        - first_seen_at
+        - last_checked_at
+        - images
+
+    ListingDetail:
+      allOf:
+        - $ref: "#/components/schemas/ListingCard"
+        - type: object
+          properties:
+            description:
+              type: ["string", "null"]
+            bedrooms:
+              type: ["number", "null"]
+            bathrooms:
+              type: ["number", "null"]
+            heating:
+              type: ["string", "null"]
+            elevator:
+              type: ["boolean", "null"]
+            residential_complex:
+              type: ["string", "null"]
+            deed_status:
+              type: ["string", "null"]
+            distance_to_sea_m:
+              type: ["number", "null"]
+            address_text:
+              type: ["string", "null"]
+            seller_type:
+              type: ["string", "null"]
+            agency_name:
+              type: ["string", "null"]
+            publication_date:
+              type: ["string", "null"]
+              format: date
+            source_code:
+              type: string
+            external_id:
+              type: string
+            original_url:
+              type: ["string", "null"]
+            price_info:
+              oneOf:
+                - $ref: "#/components/schemas/PriceInfo"
+                - type: "null"
+            freshness:
+              oneOf:
+                - $ref: "#/components/schemas/FreshnessInfo"
+                - type: "null"
+            features:
+              type: object
+              additionalProperties:
+                type: ["string", "null"]
+          required: [source_code, external_id]
+
+    ListingPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListingCard"
+        total:
+          type: number
+        page:
+          type: number
+        per_page:
+          type: number
+      required: [items, total, page, per_page]
+
+    HistoryPoint:
+      type: object
+      properties:
+        observed_at:
+          type: string
+          format: date-time
+        price:
+          type: ["number", "null"]
+        currency:
+          type: ["string", "null"]
+        status:
+          type: ["string", "null"]
+        gross_area_m2:
+          type: ["number", "null"]
+        net_area_m2:
+          type: ["number", "null"]
+        changed_fields:
+          type: ["object", "null"]
+          additionalProperties: true
+      required: [observed_at]
+
+    MapPoint:
+      type: object
+      properties:
+        id:
+          type: number
+        latitude:
+          type: number
+        longitude:
+          type: number
+        price:
+          type: ["number", "null"]
+        currency:
+          type: string
+        rooms:
+          type: ["string", "null"]
+      required: [id, latitude, longitude, currency]
+
+    MetaResponse:
+      type: object
+      properties:
+        transaction_types:
+          type: array
+          items:
+            type: string
+        property_types:
+          type: array
+          items:
+            type: string
+        currencies:
+          type: array
+          items:
+            type: string
+        exchange_rates:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              rate_to_try:
+                type: number
+              fetched_at:
+                type: string
+        sorts:
+          type: array
+          items:
+            type: string
+      required: [transaction_types, property_types, currencies, exchange_rates, sorts]
+
+    FavoriteInput:
+      type: object
+      properties:
+        listing_id:
+          type: number
+      required: [listing_id]

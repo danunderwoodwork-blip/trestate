@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "TREstate"
+description = "TREstate is a Turkish real estate aggregator and search platform. It lets users browse, filter, and save property listings from a centralized database — searching by transaction type, property type, district, rooms, price, area, and amenities. The app includes a map view, listing detail pages with price history, and a favorites system."
+version = "1.0.0"
+id = "artifacts/trestate"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23054
+
+[services.development]
+run = "pnpm --filter @workspace/trestate run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/trestate", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/trestate/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23054"
+BASE_PATH = "/"

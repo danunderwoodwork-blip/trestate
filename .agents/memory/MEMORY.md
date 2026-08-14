@@ -1,0 +1,2 @@
+- [Python backend in pnpm workspace](python-backend.md) — FastAPI backend lives in backend/ at workspace root; api-server artifact runs uvicorn via `cd ../../backend && python3 -m uvicorn app.main:app`; Python packages installed via installLanguagePackages, not pip directly.
+- [API client extra headers](api-client-headers.md) — setExtraHeaders added to lib/api-client-react/src/custom-fetch.ts and re-exported from index.ts; use it to inject X-Device-Id or other per-session headers without modifying generated code.
