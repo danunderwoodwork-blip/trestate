@@ -14,17 +14,20 @@ run = "cd ../../backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port
 
 [services.production]
 
+# The API is Python (FastAPI), not the Node scaffold it started as — the deploy
+# image therefore needs the Python deps installed explicitly. Without this step
+# nothing ever runs `uv sync` in production and `uvicorn` is missing at startup.
+[services.production.build]
+args = ["uv", "sync", "--frozen"]
+
 [services.production.run]
-# Production CWD is the workspace root, so backend/ is a direct child — not ../../backend
-args = ["bash", "-c", "cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8080"]
+# Production CWD is the workspace root, so backend/ is a direct child — not ../../backend.
+# `uv run` instead of a bare `python3` so the venv is resolved regardless of where
+# Replit places it (.venv vs .pythonlibs) or whether it lands on PATH in the container.
+args = ["bash", "-c", "cd backend && exec uv run uvicorn app.main:app --host 0.0.0.0 --port 8080"]
 
 [services.production.run.env]
 PORT = "8080"
 
 [services.production.health.startup]
 path = "/api/healthz"
-modules = ["python-3.12"]
-
-[deployment]
-router = "application"
-deploymentTarget = "autoscale"
