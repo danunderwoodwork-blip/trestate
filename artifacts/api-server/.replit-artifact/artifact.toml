@@ -15,7 +15,8 @@ run = "cd ../../backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port
 [services.production]
 
 [services.production.run]
-args = ["bash", "-c", "cd ../../backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8080"]
+# Production CWD is the workspace root, so backend/ is a direct child — not ../../backend
+args = ["bash", "-c", "cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8080"]
 
 [services.production.run.env]
 PORT = "8080"

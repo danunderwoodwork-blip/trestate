@@ -6,10 +6,12 @@ description: How the FastAPI backend is structured and run inside the Replit pnp
 The TREstate backend is Python FastAPI, not Node.js. It lives at `backend/` in the workspace root.
 
 **Run command** (in api-server artifact.toml):
-```
-cd ../../backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --reload
-```
-The workflow CWD is `artifacts/api-server/`, so `../../backend` is needed.
+- **Development** (workflow CWD = `artifacts/api-server/`): `cd ../../backend && python3 -m uvicorn ...`
+- **Production** (container CWD = workspace root): `cd backend && python3 -m uvicorn ...`
+
+These differ — the two artifact.toml entries must use different paths. Using `../../backend` in production causes `bash: cd: ../../backend: No such file or directory` and the health probe never passes.
+
+**Why:** In dev, Replit starts each artifact workflow from inside its own artifact directory. In production autoscale containers, the CWD is the workspace root.
 
 **Python packages:** Installed via `installLanguagePackages({ language: "python", packages: [...] })` — do NOT use `pip install` or `pip3 install` directly (NixOS blocks system-level pip installs). Packages land in `.pythonlibs/bin/`.
 

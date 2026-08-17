@@ -74,8 +74,9 @@ async def _seed_if_empty() -> None:
 async def lifespan(app: FastAPI):
     # Create all tables on startup (works for both SQLite dev and PostgreSQL prod)
     Base.metadata.create_all(bind=engine)
-    # Seed demo data if the database is empty
-    await _seed_if_empty()
+    # Seed demo data in the background so the health probe passes immediately.
+    # The app is fully ready to serve requests before seeding finishes.
+    asyncio.create_task(_seed_if_empty())
     yield
 
 
